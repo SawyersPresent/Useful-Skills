@@ -61,7 +61,3 @@ Use byovd-re to analyze this Windows kernel driver. I need confirmed-only findin
 1. Copy this folder to your assistant skills directory as `byovd-re`.
 2. Ensure the skill file is available at `.../byovd-re/SKILL.md`.
 3. Invoke the skill by name in your AI workflow.
-
-## Attribution
-
-Methodology adapted from `AI-Tomfuckery`, then generalized for Codex + any compatible reverse-engineering MCP backend.
