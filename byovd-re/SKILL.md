@@ -17,7 +17,7 @@ All five must be YES for a confirmed primitive:
 4. Does the user control the source/value?
 5. Does the user control the size/count?
 
-For callback removal primitives: Q3/Q4/Q5 are N/A â€” sending the command IS the primitive.
+For callback removal primitives: Q3/Q4/Q5 are N/A   sending the command IS the primitive.
 
 ## Compatibility
 
@@ -44,13 +44,13 @@ If a backend lacks one capability, document that gap and downgrade confidence in
 
 ---
 
-## Phase 1 â€” Surface Mapping
+## Phase 1  Surface Mapping
 
-**Goal**: Map the full attack surface. Do NOT assess exploitability yet â€” enumerate only.
+**Goal**: Map the full attack surface. Do NOT assess exploitability yet   enumerate only.
 
 ### 1.1 Entry Point Analysis
 
-1. Find `DriverEntry` â€” usually the binary entry point.
+1. Find `DriverEntry`   usually the binary entry point.
    - Signature: `NTSTATUS DriverEntry(DRIVER_OBJECT*, UNICODE_STRING*)`
    - Use your backend's decompile or disassembly view on the entry point.
 2. From `DriverEntry`, extract:
@@ -58,7 +58,7 @@ If a backend lacks one capability, document that gap and downgrade confidence in
    - `DriverUnload` pointer
    - `DeviceName` and `SymbolicLinkName`
 3. Apply types early: `DRIVER_OBJECT`, `DEVICE_OBJECT`, `IRP`, `IO_STACK_LOCATION`,
-   `UNICODE_STRING` â€” apply type annotations/struct definitions in your backend to improve readability.
+   `UNICODE_STRING`   apply type annotations/struct definitions in your backend to improve readability.
 
 ### 1.2 Dangerous Import Enumeration
 
@@ -103,7 +103,7 @@ Look for:
 
 ---
 
-## Phase 2 â€” Access Control Verification
+## Phase 2  Access Control Verification
 
 **Goal**: For every channel from Phase 1, determine the actual enforced security policy.
 This is the most common source of false positives.
@@ -121,12 +121,12 @@ Then follow Buffer pointer, read Length bytes, decode as UTF-16LE.
 ```
 
 SDDL interpretation:
-- `D:P` (empty protected DACL) â†’ **deny all** â€” remove from candidate list
-- `D:P(A;;GA;;;AU)` â†’ any authenticated user â€” **in scope**
-- `D:P(A;;GA;;;SY)` â†’ SYSTEM only â€” remove
-- `D:P(A;;GA;;;BA)` â†’ Built-in Administrators only â€” in scope (elevated attacker)
+- `D:P` (empty protected DACL) â†’ **deny all**   remove from candidate list
+- `D:P(A;;GA;;;AU)` â†’ any authenticated user   **in scope**
+- `D:P(A;;GA;;;SY)` â†’ SYSTEM only   remove
+- `D:P(A;;GA;;;BA)` â†’ Built-in Administrators only   in scope (elevated attacker)
 
-For `IoCreateDevice` (no SDDL): access governed by object manager default â€” typically
+For `IoCreateDevice` (no SDDL): access governed by object manager default   typically
 requires admin.
 
 ### 2.2 Symlink Check
@@ -151,7 +151,7 @@ and stop.
 
 ---
 
-## Phase 3 â€” Dispatch Tracing
+## Phase 3   Dispatch Tracing
 
 **Goal**: Trace every accessible IOCTL/command to every dangerous API call site.
 
@@ -175,12 +175,12 @@ For each IOCTL branch, follow depth-first until hitting a dangerous API or dead 
 ### 3.3 Minifilter Message Path
 
 - Analyze `MessageNotifyCallback`, map each `cmd` to its handler, and trace to dangerous APIs.
-- Pre/post-op callbacks fire on filesystem I/O â€” tag as **kernel-event-triggered** (not
+- Pre/post-op callbacks fire on filesystem I/O   tag as **kernel-event-triggered** (not
   user-on-demand)
 
 ---
 
-## Phase 4 â€” Parameter Taint Analysis
+## Phase 4   Parameter Taint Analysis
 
 **Goal**: For each dangerous API call site, determine whether arguments are user-controlled.
 
@@ -188,7 +188,7 @@ For each IOCTL branch, follow depth-first until hitting a dangerous API or dead 
 
 For each argument register (`rcx`, `rdx`, `r8`, `r9`, stack) at the dangerous API call:
 
-- `*(input_buffer + offset)` â†’ **DIRECT** (user-controlled â€” note offset and type)
+- `*(input_buffer + offset)` â†’ **DIRECT** (user-controlled   note offset and type)
 - `PsGetCurrentProcessId()` â†’ **not user-controlled** (always caller's own PID)
 - Hardcoded constant or global â†’ **not user-controlled**
 - Conditional based on input â†’ **INDIRECT** (note constraint)
@@ -196,9 +196,9 @@ For each argument register (`rcx`, `rdx`, `r8`, `r9`, stack) at the dangerous AP
 Check for dangerous patterns:
 - Kernel write primitives: `KeSetEvent` with user-controlled address
 - Missing `ProbeForRead`/`ProbeForWrite` before kernel-mode buffer copy
-- Unchecked buffer sizes in `METHOD_NEITHER` IOCTLs â€” pool overflow
-- `MmMapIoSpace` with user-supplied physical address â€” arbitrary physical memory access
-- Direct stack buffer reads without size validation â€” kernel stack overflow
+- Unchecked buffer sizes in `METHOD_NEITHER` IOCTLs   pool overflow
+- `MmMapIoSpace` with user-supplied physical address   arbitrary physical memory access
+- Direct stack buffer reads without size validation   kernel stack overflow
 - `ObReferenceObjectByHandle` without proper access checks
 
 ### 4.2 Input Buffer Reconstruction
@@ -225,7 +225,7 @@ struct DRIVER_WRITE_INPUT {
 
 ---
 
-## Phase 5 â€” False Positive Elimination
+## Phase 5   False Positive Elimination
 
 Apply these patterns before declaring any primitive confirmed.
 
@@ -264,18 +264,18 @@ Apply these patterns before declaring any primitive confirmed.
 
 ### FP5: Deny-All Device With Shared Handler
 
-Two devices sharing one dispatch handler â€” only the accessible device's IOCTLs are in
+Two devices sharing one dispatch handler   only the accessible device's IOCTLs are in
 scope. Verify the deny-all device has no user-mode path regardless of shared handler logic.
 
 ---
 
-## Phase 6 â€” Report
+## Phase 6   Report
 
 Write only confirmed, taint-verified primitives. False positives must be listed with
 downgrade reasons.
 
 ```markdown
-# BYOVD Vulnerability Report â€” [Driver Name]
+# BYOVD Vulnerability Report   [Driver Name]
 
 ## Driver Information
 | Field | Value |
@@ -295,7 +295,7 @@ downgrade reasons.
 
 ## Confirmed Vulnerabilities
 
-### [1] [Technique Name] â€” [CRITICAL/HIGH/MEDIUM]
+### [1] [Technique Name]   [CRITICAL/HIGH/MEDIUM]
 **IOCTL / Command**: `0xXXXXXXXX`
 **Root Cause**: [API, why dangerous, what check is missing]
 **Input Buffer**:
